@@ -1,7 +1,7 @@
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';  // <-- import useNavigate
 
 const fallbackImage = "https://via.placeholder.com/400x300.png?text=Meal+Image";
 
@@ -24,6 +24,8 @@ function Meals() {
   const { favorites, toggleFavorite } = useFavorites();
   const [query, setQuery] = useState("");
   const [meals, setMeals] = useState([]);
+  const navigate = useNavigate();  // <-- initialize navigate
+  const user = JSON.parse(localStorage.getItem("user")); // <-- get logged-in user info
 
   const staticMeals = [
     {
@@ -102,18 +104,30 @@ function Meals() {
               <div className="p-4 text-left">
                 <h3 className="text-xl font-semibold text-gray-800">{meal.name}</h3>
                 <div className="flex justify-between items-center mb-2">
-                  <Link
-                    to={`/vendor/${encodeURIComponent(meal.vendor)}`}
-                    className="text-sm text-red-500 hover:underline"
+                  <span
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/login");
+                      } else {
+                        navigate(`/vendor/${encodeURIComponent(meal.vendor)}`);
+                      }
+                    }}
+                    className="text-sm text-red-500 hover:underline cursor-pointer"
                   >
                     {meal.vendor}
-                  </Link>
+                  </span>
                   <RatingStars value={meal.rating || 4.0} />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="font-bold text-red-500">₦{meal.price}</span>
                   <button
-                    onClick={() => addToCart(meal)}
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/login");
+                      } else {
+                        addToCart(meal);
+                      }
+                    }}
                     className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 text-sm"
                   >
                     Order Now
