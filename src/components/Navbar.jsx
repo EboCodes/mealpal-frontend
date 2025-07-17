@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import Swal from 'sweetalert2'; // ✅ Import SweetAlert2
 import { useCart } from '../context/CartContext';
 
 function Navbar() {
@@ -9,7 +10,6 @@ function Navbar() {
   const location = useLocation();
   const { cartItems } = useCart();
 
-  // 🔄 Update user state on route change
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -21,10 +21,31 @@ function Navbar() {
 
   const handleClose = () => setOpen(false);
 
-  const handleLogout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
-    navigate("/auth");
+  // ✅ Stylish logout with confirmation
+  const handleLogout = async () => {
+    const result = await Swal.fire({
+      title: 'Are you sure you want to logout?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#e3342f',
+      cancelButtonColor: '#aaa',
+      confirmButtonText: 'Yes, logout',
+      cancelButtonText: 'Cancel',
+    });
+
+    if (result.isConfirmed) {
+      localStorage.removeItem("user");
+      setUser(null);
+      navigate("/auth");
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Logged out!',
+        text: 'You have been successfully logged out.',
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    }
   };
 
   const isVendor = user?.role === "vendor";
@@ -50,31 +71,30 @@ function Navbar() {
           </Link>
 
           {/* 👨‍🎓 Student-Only Links */}
-			{user && !isVendor && (
-			  <>
-				<Link to="/meals" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
-				  Meals
-				</Link>
-				<Link to="/vendors" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
-				  Browse Vendors
-				</Link>
-				<Link to="/orders" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
-				  Orders
-				</Link>
-				<Link to="/favorites" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
-				  Favorites
-				</Link>
-				<Link to="/cart" className="relative text-gray-700 hover:text-red-500" onClick={handleClose}>
-				  🛒
-				  {cartItems.length > 0 && (
-					<span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-1.5 rounded-full">
-					  {cartItems.length}
-					</span>
-				  )}
-				</Link>
-			  </>
-			)}
-
+          {user && !isVendor && (
+            <>
+              <Link to="/meals" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
+                Meals
+              </Link>
+              <Link to="/vendors" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
+                Browse Vendors
+              </Link>
+              <Link to="/orders" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
+                Orders
+              </Link>
+              <Link to="/favorites" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
+                Favorites
+              </Link>
+              <Link to="/cart" className="relative text-gray-700 hover:text-red-500" onClick={handleClose}>
+                🛒
+                {cartItems.length > 0 && (
+                  <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-1.5 rounded-full">
+                    {cartItems.length}
+                  </span>
+                )}
+              </Link>
+            </>
+          )}
 
           {/* 🧑‍🍳 Vendor Dashboard */}
           {user && isVendor && (
@@ -87,8 +107,8 @@ function Navbar() {
           {user ? (
             <button
               onClick={() => {
-                handleLogout();
                 handleClose();
+                handleLogout();
               }}
               className="text-red-500 font-medium"
             >
