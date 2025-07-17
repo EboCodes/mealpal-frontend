@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 function Auth() {
   const location = useLocation();
@@ -34,7 +35,7 @@ function Auth() {
 
     const payload = {
       ...form,
-      role: isVendor ? "vendor" : "user", // ✅ use correct role
+      role: isVendor ? "vendor" : "user",
     };
 
     try {
@@ -48,19 +49,23 @@ function Auth() {
       console.log("Server response:", data);
 
       if (!res.ok) {
-        alert(data.message || "An error occurred");
+        Swal.fire({
+          icon: "error",
+          title: "Oops...",
+          text: data.message || "An error occurred",
+        });
         return;
       }
 
-      // 🔒 Prevent logging in from wrong form
       if (!isSignup && data.role !== payload.role) {
-        alert(
-          `This account is registered as a ${data.role}. Please log in from the correct form.`
-        );
+        Swal.fire({
+          icon: "warning",
+          title: "Wrong Login Method",
+          text: `This account is registered as a ${data.role}. Please use the correct login tab.`,
+        });
         return;
       }
 
-      // ✅ Save user locally
       localStorage.setItem(
         "user",
         JSON.stringify({
@@ -71,15 +76,28 @@ function Auth() {
         })
       );
 
-      // ✅ Navigate to dashboard or meals
-      if (data.role === "vendor") {
-        navigate("/dashboard");
-      } else {
-        navigate("/meals");
-      }
+      Swal.fire({
+        icon: "success",
+        title: "Success!",
+        text: `Welcome, ${data.name || form.name}`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+
+      setTimeout(() => {
+        if (data.role === "vendor") {
+          navigate("/dashboard");
+        } else {
+          navigate("/meals");
+        }
+      }, 1600);
     } catch (err) {
       console.error("Error:", err);
-      alert("Something went wrong.");
+      Swal.fire({
+        icon: "error",
+        title: "Something went wrong",
+        text: "Please try again later.",
+      });
     }
   };
 
@@ -163,7 +181,6 @@ function Auth() {
             required
           />
 
-          {/* Vendor info notice */}
           {isSignup && isVendor && (
             <div className="bg-yellow-100 p-3 text-sm rounded border border-yellow-300 text-yellow-800">
               ⚠️ Vendors must pay a <strong>₦3,000 registration fee</strong> to activate their account.
