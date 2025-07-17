@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 function OrderHistory() {
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true); // Added loading state
   const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
@@ -13,6 +14,8 @@ function OrderHistory() {
         else console.error("Failed to fetch orders");
       } catch (err) {
         console.error("Fetch error:", err);
+      } finally {
+        setLoading(false); // Hide loading after fetch
       }
     };
 
@@ -23,7 +26,9 @@ function OrderHistory() {
     <section className="py-16 px-4 min-h-screen bg-white">
       <h2 className="text-3xl font-bold text-red-500 mb-6">Order History</h2>
 
-      {orders.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-500">Loading orders...</p>
+      ) : orders.length === 0 ? (
         <p className="text-gray-500">No orders yet.</p>
       ) : (
         orders.map((order, i) => (
