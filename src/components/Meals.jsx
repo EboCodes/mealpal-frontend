@@ -107,7 +107,7 @@ function Meals() {
                   <span
                     onClick={() => {
                       if (!user) {
-                        navigate("/login");
+                        navigate("/auth");
                       } else {
                         navigate(`/vendor/${encodeURIComponent(meal.vendor)}`);
                       }
@@ -123,7 +123,7 @@ function Meals() {
                   <button
                     onClick={() => {
                       if (!user) {
-                        navigate("/login");
+                        navigate("/auth");
                       } else {
                         addToCart(meal);
                       }
