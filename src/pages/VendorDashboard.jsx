@@ -108,8 +108,8 @@ function VendorDashboard() {
 
     try {
       const endpoint = form.editingId
-        ? `http://localhost:5000/api/meals/${form.editingId}`
-        : "http://localhost:5000/api/meals";
+        ? `https://mealpal-backend-emoq.onrender.com/api/meals/${form.editingId}`
+        : "https://mealpal-backend-emoq.onrender.com/api/meals";
       const method = form.editingId ? "PUT" : "POST";
 
       const res = await fetch(endpoint, { method, body: formData });
