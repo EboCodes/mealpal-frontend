@@ -94,29 +94,33 @@ useEffect(() => {
     }
   };
 
-  const handleAddOrEditMeal = async (e) => {
-    e.preventDefault();
-    if (!form.name || !form.price) return;
+const handleAddOrEditMeal = async (e) => {
+  e.preventDefault();
+  if (!form.name || !form.price) return;
 
-    setIsSubmittingMeal(true);
-    const formData = new FormData();
-    formData.append("name", form.name);
-	formData.append("price", form.price);
-	formData.append("vendor", vendorName);
-	formData.append("school", user?.school || "Unknown"); 
+  setIsSubmittingMeal(true);
+  const formData = new FormData();
+  formData.append("name", form.name);
+  formData.append("price", form.price);
+  formData.append("vendorId", user?._id); 
 
-    if (form.imageFile instanceof File) {
-      formData.append("image", form.imageFile);
-    }
+  if (form.imageFile instanceof File) {
+    formData.append("img", form.imageFile); 
+  }
 
-    try {
-      const endpoint = form.editingId
-        ? `https://mealpal-backend-emoq.onrender.com/api/meals/${form.editingId}`
-        : "https://mealpal-backend-emoq.onrender.com/api/meals";
-      const method = form.editingId ? "PUT" : "POST";
+  try {
+    const endpoint = form.editingId
+      ? `https://mealpal-backend-emoq.onrender.com/api/meals/${form.editingId}`
+      : "https://mealpal-backend-emoq.onrender.com/api/meals";
+    const method = form.editingId ? "PUT" : "POST";
 
-      const res = await fetch(endpoint, { method, body: formData });
-      const data = await res.json();
+    const res = await fetch(endpoint, {
+      method,
+      body: formData,
+    });
+
+    const data = await res.json();
+
 
       if (res.ok) {
         setMeals((prev) =>
