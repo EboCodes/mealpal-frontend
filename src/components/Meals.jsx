@@ -39,7 +39,7 @@ function Meals() {
         }
 
         const res = await fetch(
-          `https://mealpal-backend-emoq.onrender.com/api/meals?school=${encodeURIComponent(school)}`
+          `https://mealpal-backend-emoq.onrender.com/api/meals?school=${school}`
         );
 
         if (!res.ok) throw new Error("Meal fetch failed");

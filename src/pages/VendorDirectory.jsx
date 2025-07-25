@@ -14,7 +14,7 @@ function VendorDirectory() {
 
       try {
         const res = await fetch(
-          `https://mealpal-backend-emoq.onrender.com/api/vendors?school=${encodeURIComponent(school)}`
+          `https://mealpal-backend-emoq.onrender.com/api/vendors?school=${school}`
         );
 
         if (!res.ok) throw new Error("Failed to fetch vendors");

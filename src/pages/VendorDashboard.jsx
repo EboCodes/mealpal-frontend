@@ -103,6 +103,7 @@ const handleAddOrEditMeal = async (e) => {
   formData.append("name", form.name);
   formData.append("price", form.price);
   formData.append("vendorId", user?._id); 
+  formData.append("school", user?.school || "");
 
   if (form.imageFile instanceof File) {
     formData.append("img", form.imageFile); 
