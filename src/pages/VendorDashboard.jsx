@@ -6,6 +6,25 @@ function VendorDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const vendorName = user?.name || "Unknown Vendor";
   
+  // Extract user ID from JWT token
+  const getUserIdFromToken = (token) => {
+    try {
+      if (!token) return null;
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      const decoded = JSON.parse(jsonPayload);
+      return decoded.id;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  };
+
+  const userId = getUserIdFromToken(user?.token);
+  
   const [meals, setMeals] = useState([]);
   const [form, setForm] = useState({ name: "", price: "", imageFile: null, editingId: null });
   const [previewURL, setPreviewURL] = useState("");
@@ -17,8 +36,7 @@ function VendorDashboard() {
 
   // Debug: Log the user object to see what we're working with
   console.log("Current user object:", user);
-  console.log("User ID from token:", user?.id);
-  console.log("User _id:", user?._id);
+  console.log("Extracted user ID from token:", userId);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -36,8 +54,7 @@ function VendorDashboard() {
         const mealsData = await mealRes.json();
         
         // Filter meals by vendor ID instead of vendor name
-        const vendorId = user?.id || user?._id;
-        setMeals(mealsData.filter((m) => m.vendor === vendorId || m.vendor?._id === vendorId));
+        setMeals(mealsData.filter((m) => m.vendor === userId || m.vendor?._id === userId));
 
         const profileRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${vendorName}`);
         const profileData = await profileRes.json();
@@ -130,8 +147,8 @@ function VendorDashboard() {
     formData.append("name", form.name);
     formData.append("price", form.price);
     
-    // Fixed: Use the correct vendor ID from JWT token (should be "6882eabf3de714181a1aad93")
-    const vendorId = user?.id; // From your JWT, this should be the correct field
+    // Fixed: Use the correct vendor ID from JWT token (should be "6883110e41d32f103ae90cd8b")
+    const vendorId = userId;
     console.log("Using vendor ID:", vendorId);
     
     if (!vendorId) {
@@ -150,7 +167,7 @@ function VendorDashboard() {
 
     // For PUT requests, add vendor field (required by your backend)
     if (form.editingId) {
-      formData.append("vendor", vendorId);
+      formData.append("vendor", userId);
     }
 
     // Debug logging
@@ -216,15 +233,13 @@ function VendorDashboard() {
   const handleDeleteMeal = async (id) => {
     if (!window.confirm("Are you sure you want to delete this meal?")) return;
 
-    try {
-      const vendorId = user?.id;
-      
+    try {      
       const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals/${id}`, {
         method: "DELETE",
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ vendor: vendorId }), // Required by your backend
+        body: JSON.stringify({ vendor: userId }), // Use extracted user ID
       });
       
       if (res.ok) {
