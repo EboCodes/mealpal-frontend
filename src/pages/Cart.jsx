@@ -67,7 +67,7 @@ function Cart() {
   return (
     <section className="bg-white py-16 px-4 min-h-screen">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-3xl font-bold text-red-500 mb-6">Your Cart</h2>
+        <h2 className="text-3xl font-bold text-center text-red-500 mb-6">Your Cart</h2>
 
         {cartItems.length === 0 ? (
           <p className="text-center text-gray-500">Your cart is empty.</p>
