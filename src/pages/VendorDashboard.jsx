@@ -5,44 +5,59 @@ import toast from "react-hot-toast";
 function VendorDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
   const vendorName = user?.name || "Unknown Vendor";
-
+  
   const [meals, setMeals] = useState([]);
   const [form, setForm] = useState({ name: "", price: "", imageFile: null, editingId: null });
   const [previewURL, setPreviewURL] = useState("");
-
   const [profile, setProfile] = useState({ description: "", coverImage: null });
   const [coverPreview, setCoverPreview] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSubmittingMeal, setIsSubmittingMeal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals?email=${user.email}`);
-      const mealsData = await mealRes.json();
-      setMeals(mealsData.filter((m) => m.vendor === vendorName));
+  // Debug: Log the user object to see what we're working with
+  console.log("Current user object:", user);
+  console.log("User ID from token:", user?.id);
+  console.log("User _id:", user?._id);
 
-      const profileRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${vendorName}`);
-      const profileData = await profileRes.json();
-      if (profileRes.ok && profileData) {
-        setProfile({
-          description: profileData.description || "",
-          coverImage: profileData.coverImage || null,
-        });
-        setCoverPreview(profileData.coverImage);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fixed: Use the correct school parameter instead of email
+        const school = user?.school;
+        if (!school) {
+          console.warn("No school found for user.");
+          setMeals([]);
+          setLoading(false);
+          return;
+        }
+
+        const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals?school=${school}`);
+        const mealsData = await mealRes.json();
+        
+        // Filter meals by vendor ID instead of vendor name
+        const vendorId = user?.id || user?._id;
+        setMeals(mealsData.filter((m) => m.vendor === vendorId || m.vendor?._id === vendorId));
+
+        const profileRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${vendorName}`);
+        const profileData = await profileRes.json();
+        if (profileRes.ok && profileData) {
+          setProfile({
+            description: profileData.description || "",
+            coverImage: profileData.coverImage || null,
+          });
+          setCoverPreview(profileData.coverImage);
+        }
+      } catch (err) {
+        console.error("Error loading:", err);
+        toast.error("Failed to load meals or profile");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error loading:", err);
-      toast.error("Failed to load meals or profile");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  fetchData();
-}, [vendorName]);
-
+    fetchData();
+  }, [vendorName, user?.school]);
 
   const handleProfileChange = (e) => {
     const { name, value, files } = e.target;
@@ -66,6 +81,7 @@ useEffect(() => {
     try {
       const res = await fetch("https://mealpal-backend-emoq.onrender.com/api/vendor/profile", {
         method: "PUT",
+        // Removed auth header for now - check if this endpoint needs it
         body: formData,
       });
 
@@ -94,34 +110,80 @@ useEffect(() => {
     }
   };
 
-const handleAddOrEditMeal = async (e) => {
-  e.preventDefault();
-  if (!form.name || !form.price) return;
+  const handleAddOrEditMeal = async (e) => {
+    e.preventDefault();
+    
+    // Better validation
+    if (!form.name || !form.price) {
+      toast.error("Please fill in meal name and price");
+      return;
+    }
 
-  setIsSubmittingMeal(true);
-  const formData = new FormData();
-  formData.append("name", form.name);
-  formData.append("price", form.price);
-  formData.append("vendorId", user?._id); 
-  formData.append("school", user?.school || "");
+    // Check if image is required for new meals
+    if (!form.editingId && !form.imageFile) {
+      toast.error("Please select an image for the meal");
+      return;
+    }
 
-  if (form.imageFile instanceof File) {
-    formData.append("img", form.imageFile); 
-  }
+    setIsSubmittingMeal(true);
+    const formData = new FormData();
+    formData.append("name", form.name);
+    formData.append("price", form.price);
+    
+    // Fixed: Use the correct vendor ID from JWT token (should be "6882eabf3de714181a1aad93")
+    const vendorId = user?.id; // From your JWT, this should be the correct field
+    console.log("Using vendor ID:", vendorId);
+    
+    if (!vendorId) {
+      toast.error("Vendor ID not found. Please log in again.");
+      setIsSubmittingMeal(false);
+      return;
+    }
+    formData.append("vendorId", vendorId);
+    
+    // Removed school field as backend doesn't expect it
+    // formData.append("school", user?.school || "");
 
-  try {
-    const endpoint = form.editingId
-      ? `https://mealpal-backend-emoq.onrender.com/api/meals/${form.editingId}`
-      : "https://mealpal-backend-emoq.onrender.com/api/meals";
-    const method = form.editingId ? "PUT" : "POST";
+    if (form.imageFile instanceof File) {
+      formData.append("img", form.imageFile); 
+    }
 
-    const res = await fetch(endpoint, {
-      method,
-      body: formData,
-    });
+    // For PUT requests, add vendor field (required by your backend)
+    if (form.editingId) {
+      formData.append("vendor", vendorId);
+    }
 
-    const data = await res.json();
+    // Debug logging
+    console.log("Submitting meal with data:");
+    console.log("- name:", form.name);
+    console.log("- price:", form.price);
+    console.log("- vendorId:", vendorId);
+    console.log("- image file:", form.imageFile);
+    console.log("- editing ID:", form.editingId);
 
+    try {
+      const endpoint = form.editingId
+        ? `https://mealpal-backend-emoq.onrender.com/api/meals/${form.editingId}`
+        : "https://mealpal-backend-emoq.onrender.com/api/meals";
+      const method = form.editingId ? "PUT" : "POST";
+
+      const res = await fetch(endpoint, {
+        method,
+        // Removed Authorization header - your backend doesn't require it
+        body: formData,
+      });
+
+      console.log("Response status:", res.status);
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Server error response:", errorText);
+        toast.error(`Upload failed: ${res.status} - ${errorText}`);
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Success response:", data);
 
       if (res.ok) {
         setMeals((prev) =>
@@ -132,12 +194,10 @@ const handleAddOrEditMeal = async (e) => {
         setForm({ name: "", price: "", imageFile: null, editingId: null });
         setPreviewURL("");
         toast.success(form.editingId ? "Meal updated!" : "Meal added!");
-      } else {
-        toast.error(data.message || "Upload failed.");
       }
     } catch (err) {
       console.error("Upload error:", err);
-      toast.error("Something went wrong.");
+      toast.error(`Network error: ${err.message}`);
     } finally {
       setIsSubmittingMeal(false);
     }
@@ -157,13 +217,22 @@ const handleAddOrEditMeal = async (e) => {
     if (!window.confirm("Are you sure you want to delete this meal?")) return;
 
     try {
+      const vendorId = user?.id;
+      
       const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals/${id}`, {
         method: "DELETE",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ vendor: vendorId }), // Required by your backend
       });
+      
       if (res.ok) {
         setMeals((prev) => prev.filter((m) => m._id !== id));
         toast.success("Meal deleted.");
       } else {
+        const errorText = await res.text();
+        console.error("Delete error response:", errorText);
         toast.error("Delete failed.");
       }
     } catch (err) {
@@ -180,7 +249,7 @@ const handleAddOrEditMeal = async (e) => {
     <section className="min-h-screen bg-white py-16 px-4">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-3xl font-bold text-red-500 mb-6">{vendorName}'s Dashboard</h2>
-
+        
         {/* 🧑🏽‍🍳 Profile Section */}
         <div className="bg-white border border-yellow-200 p-6 rounded-xl shadow mb-10">
           <h3 className="text-xl font-semibold mb-4">Vendor Profile</h3>
@@ -241,6 +310,7 @@ const handleAddOrEditMeal = async (e) => {
             accept="image/*"
             onChange={handleMealChange}
             className="w-full px-4 py-2 border rounded"
+            required={!form.editingId} // Make required only for new meals
           />
           {previewURL && (
             <img
@@ -271,7 +341,7 @@ const handleAddOrEditMeal = async (e) => {
                   className="w-full h-40 object-cover rounded"
                 />
                 <h4 className="text-lg font-bold mt-2">{meal.name}</h4>
-                <p className="text-sm text-gray-600">Vendor: {meal.vendor}</p>
+                <p className="text-sm text-gray-600">Vendor: {meal.vendor?.name || vendorName}</p>
                 <p className="text-red-500 font-semibold">₦{meal.price}</p>
                 <div className="flex justify-end mt-2 gap-2">
                   <button
