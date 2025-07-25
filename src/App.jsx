@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast"; // ✅ Added
+import { Toaster } from "react-hot-toast"; 
 
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
@@ -13,7 +13,7 @@ import VendorProfile from "./pages/VendorProfile";
 import VendorDashboard from "./pages/VendorDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import VendorDirectory from "./pages/VendorDirectory";
-import VendorOrders from "./pages/VendorOrders"; // ✅ Import VendorOrders
+import VendorOrders from "./pages/VendorOrders"; 
 
 function AppWrapper() {
   const location = useLocation();
@@ -78,6 +78,8 @@ function AppWrapper() {
                 </ProtectedRoute>
               }
             />
+            
+            
           </>
         )}
 

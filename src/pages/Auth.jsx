@@ -8,7 +8,8 @@ function Auth() {
 
   const [userType, setUserType] = useState("user");
   const [mode, setMode] = useState("signup");
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", school: "" });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -28,6 +29,7 @@ function Auth() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     const endpoint = isSignup
       ? "https://mealpal-backend-emoq.onrender.com/api/auth/register"
@@ -73,6 +75,7 @@ function Auth() {
           role: data.role,
           name: data.name || form.name,
           email: data.email || form.email,
+          school: data.school || form.school,
         })
       );
 
@@ -98,6 +101,8 @@ function Auth() {
         title: "Something went wrong",
         text: "Please try again later.",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -108,17 +113,13 @@ function Auth() {
         <div className="flex justify-center mb-4 space-x-4">
           <button
             onClick={() => setMode("login")}
-            className={`py-1 px-3 rounded font-semibold ${
-              !isSignup ? "bg-red-500 text-white" : "text-red-500"
-            }`}
+            className={`py-1 px-3 rounded font-semibold ${!isSignup ? "bg-red-500 text-white" : "text-red-500"}`}
           >
             Sign In
           </button>
           <button
             onClick={() => setMode("signup")}
-            className={`py-1 px-3 rounded font-semibold ${
-              isSignup ? "bg-red-500 text-white" : "text-red-500"
-            }`}
+            className={`py-1 px-3 rounded font-semibold ${isSignup ? "bg-red-500 text-white" : "text-red-500"}`}
           >
             Sign Up
           </button>
@@ -128,21 +129,13 @@ function Auth() {
         <div className="flex justify-between mb-6 border-b pb-2">
           <button
             onClick={() => setUserType("user")}
-            className={`w-1/2 py-2 font-bold ${
-              isStudent
-                ? "text-red-600 border-b-4 border-red-600"
-                : "text-gray-500"
-            }`}
+            className={`w-1/2 py-2 font-bold ${isStudent ? "text-red-600 border-b-4 border-red-600" : "text-gray-500"}`}
           >
             Student
           </button>
           <button
             onClick={() => setUserType("vendor")}
-            className={`w-1/2 py-2 font-bold ${
-              isVendor
-                ? "text-red-600 border-b-4 border-red-600"
-                : "text-gray-500"
-            }`}
+            className={`w-1/2 py-2 font-bold ${isVendor ? "text-red-600 border-b-4 border-red-600" : "text-gray-500"}`}
           >
             Vendor
           </button>
@@ -181,6 +174,23 @@ function Auth() {
             required
           />
 
+          {isSignup && (
+            <select
+              name="school"
+              value={form.school}
+              onChange={handleChange}
+              className="w-full px-4 py-2 border rounded"
+              required
+            >
+              <option value="">Select Your School</option>
+              <option value="UNILAG">University of Lagos (UNILAG)</option>
+              <option value="UI">University of Ibadan (UI)</option>
+              <option value="OAU">Obafemi Awolowo University (OAU)</option>
+              <option value="COVENANT">Covenant University</option>
+              <option value="LASU">Lagos State University (LASU)</option>
+            </select>
+          )}
+
           {isSignup && isVendor && (
             <div className="bg-yellow-100 p-3 text-sm rounded border border-yellow-300 text-yellow-800">
               ⚠️ Vendors must pay a <strong>₦3,000 registration fee</strong> to activate their account.
@@ -189,9 +199,15 @@ function Auth() {
           )}
 
           <button
-            className="w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition"
+            type="submit"
+            className={`w-full bg-red-500 text-white py-2 rounded hover:bg-red-600 transition ${
+              loading ? "opacity-60 cursor-not-allowed" : ""
+            }`}
+            disabled={loading}
           >
-            {isSignup
+            {loading
+              ? "Processing..."
+              : isSignup
               ? isVendor
                 ? "Continue to Payment"
                 : "Sign Up as Student"

@@ -13,47 +13,56 @@ function Cart() {
   const deliveryFee = useDelivery ? 600 : 0;
   const total = cartItems.reduce((sum, item) => sum + item.price, 0) + deliveryFee;
 
-  const handleConfirm = async () => {
-    if (cartItems.length === 0) {
-      toast.error("Your cart is empty!");
-      return;
-    }
+ const handleConfirm = async () => {
+  if (cartItems.length === 0) {
+    toast.error("Your cart is empty!");
+    return;
+  }
 
-    if (useDelivery && (!deliveryAddress || !phoneNumber)) {
-      toast.error("Please enter delivery address and phone number.");
-      return;
-    }
+  if (useDelivery && (!deliveryAddress || !phoneNumber)) {
+    toast.error("Please enter delivery address and phone number.");
+    return;
+  }
 
-    const orderData = {
-      items: cartItems,
-      userEmail: user?.email,
-      total,
-      delivery: useDelivery,
-      deliveryAddress: useDelivery ? deliveryAddress : "",
-      phoneNumber: useDelivery ? phoneNumber : "",
-    };
+  // ✅ Transform cart items to include mealId and quantity
+  const transformedItems = cartItems.map(item => ({
+    mealId: item._id,               // used for purchaseCount++
+    name: item.name,
+    vendor: item.vendor,            // still used for vendor dashboard
+    price: item.price,
+    quantity: item.quantity || 1    // default to 1 if quantity not set
+  }));
 
-    try {
-      const res = await fetch("https://mealpal-backend-emoq.onrender.com/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(orderData),
-      });
-
-      if (res.ok) {
-        toast.success("🎉 Order confirmed!");
-        clearCart();
-        setUseDelivery(false);
-        setDeliveryAddress("");
-        setPhoneNumber("");
-      } else {
-        toast.error("Failed to confirm order");
-      }
-    } catch (err) {
-      console.error("Order error:", err);
-      toast.error("Something went wrong");
-    }
+  const orderData = {
+    items: transformedItems,
+    userEmail: user?.email,
+    total,
+    delivery: useDelivery,
+    deliveryAddress: useDelivery ? deliveryAddress : "",
+    phoneNumber: useDelivery ? phoneNumber : "",
   };
+
+  try {
+    const res = await fetch("https://mealpal-backend-emoq.onrender.com/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    });
+
+    if (res.ok) {
+      toast.success("🎉 Order confirmed!");
+      clearCart();
+      setUseDelivery(false);
+      setDeliveryAddress("");
+      setPhoneNumber("");
+    } else {
+      toast.error("Failed to confirm order");
+    }
+  } catch (err) {
+    console.error("Order error:", err);
+    toast.error("Something went wrong");
+  }
+};
 
   return (
     <section className="bg-white py-16 px-4 min-h-screen">

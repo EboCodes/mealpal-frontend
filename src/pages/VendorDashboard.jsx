@@ -16,32 +16,33 @@ function VendorDashboard() {
   const [isSubmittingMeal, setIsSubmittingMeal] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const mealRes = await fetch("https://mealpal-backend-emoq.onrender.com/api/meals");
-        const mealsData = await mealRes.json();
-        setMeals(mealsData.filter((m) => m.vendor === vendorName));
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals?email=${user.email}`);
+      const mealsData = await mealRes.json();
+      setMeals(mealsData.filter((m) => m.vendor === vendorName));
 
-        const profileRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${vendorName}`);
-        const profileData = await profileRes.json();
-        if (profileRes.ok && profileData) {
-          setProfile({
-            description: profileData.description || "",
-            coverImage: profileData.coverImage || null,
-          });
-          setCoverPreview(profileData.coverImage);
-        }
-      } catch (err) {
-        console.error("Error loading:", err);
-        toast.error("Failed to load meals or profile");
-      } finally {
-        setLoading(false);
+      const profileRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${vendorName}`);
+      const profileData = await profileRes.json();
+      if (profileRes.ok && profileData) {
+        setProfile({
+          description: profileData.description || "",
+          coverImage: profileData.coverImage || null,
+        });
+        setCoverPreview(profileData.coverImage);
       }
-    };
+    } catch (err) {
+      console.error("Error loading:", err);
+      toast.error("Failed to load meals or profile");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchData();
-  }, [vendorName]);
+  fetchData();
+}, [vendorName]);
+
 
   const handleProfileChange = (e) => {
     const { name, value, files } = e.target;
@@ -100,8 +101,10 @@ function VendorDashboard() {
     setIsSubmittingMeal(true);
     const formData = new FormData();
     formData.append("name", form.name);
-    formData.append("price", form.price);
-    formData.append("vendor", vendorName);
+	formData.append("price", form.price);
+	formData.append("vendor", vendorName);
+	formData.append("school", user?.school || "Unknown"); 
+
     if (form.imageFile instanceof File) {
       formData.append("image", form.imageFile);
     }

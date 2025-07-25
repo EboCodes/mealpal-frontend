@@ -1,6 +1,6 @@
 import Hero from '../components/Hero';
 import HowItWorks from '../components/HowItWorks';
-import Meals from '../components/Meals';
+import FeaturedMeals from "../components/FeaturedMeals";
 import VendorCTA from '../components/VendorCTA';
 
 function Home() {
@@ -8,7 +8,7 @@ function Home() {
     <>
       <Hero />
       <HowItWorks />
-      <Meals />
+      <FeaturedMeals />
       <VendorCTA />
     </>
   );

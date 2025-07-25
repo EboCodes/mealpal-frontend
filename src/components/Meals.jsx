@@ -1,7 +1,7 @@
 import { useCart } from '../context/CartContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';  // <-- import useNavigate
+import { useNavigate } from 'react-router-dom';
 
 const fallbackImage = "https://via.placeholder.com/400x300.png?text=Meal+Image";
 
@@ -23,59 +23,58 @@ function Meals() {
   const { addToCart } = useCart();
   const { favorites, toggleFavorite } = useFavorites();
   const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("");
   const [meals, setMeals] = useState([]);
-  const navigate = useNavigate();  // <-- initialize navigate
-  const user = JSON.parse(localStorage.getItem("user")); // <-- get logged-in user info
-
-  const staticMeals = [
-    {
-      name: "Jollof Rice & Chicken",
-      vendor: "Mama Nkechi's",
-      price: 1200,
-      rating: 4.3,
-      img: "https://plus.unsplash.com/premium_photo-1694141252026-3df1de888a21?w=500&auto=format&fit=crop&q=60",
-    },
-    {
-      name: "Spaghetti & Turkey",
-      vendor: "Chef T",
-      price: 1500,
-      rating: 4.7,
-      img: "https://plus.unsplash.com/premium_photo-1677000666741-17c3c57139a2?w=500&auto=format&fit=crop&q=60",
-    },
-    {
-      name: "Indomie & Boiled Egg",
-      vendor: "Auntie Mo",
-      price: 800,
-      rating: 3.9,
-      img: "https://images.unsplash.com/photo-1612927601601-6638404737ce?w=500&auto=format&fit=crop&q=60",
-    },
-  ];
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem("user"));
 
   useEffect(() => {
     const fetchMeals = async () => {
       try {
-        const res = await fetch("https://mealpal-backend-emoq.onrender.com/api/meals");
-        const backendMeals = await res.json();
-        setMeals([...staticMeals, ...backendMeals]);
+        const school = user?.school;
+        if (!school) {
+          console.warn("No school found for user.");
+          setMeals([]);
+          return;
+        }
+
+        const res = await fetch(
+          `https://mealpal-backend-emoq.onrender.com/api/meals?school=${encodeURIComponent(school)}`
+        );
+
+        if (!res.ok) throw new Error("Meal fetch failed");
+
+        const data = await res.json();
+        setMeals(data);
       } catch (err) {
-        console.error("Error loading meals:", err);
-        setMeals(staticMeals); // fallback
+        console.error("Failed to fetch meals:", err);
+        setMeals([]); // fallback to avoid crashing
       }
     };
+
     fetchMeals();
   }, []);
 
-  const filteredMeals = meals.filter(
-    (meal) =>
-      meal.name.toLowerCase().includes(query.toLowerCase()) ||
-      meal.vendor.toLowerCase().includes(query.toLowerCase())
-  );
+  const filteredMeals = (meals || [])
+    .filter((meal) => {
+      const vendorName = meal.vendor?.name || "";
+      return (
+        meal.name.toLowerCase().includes(query.toLowerCase()) ||
+        vendorName.toLowerCase().includes(query.toLowerCase())
+      );
+    })
+    .sort((a, b) => {
+      if (sort === "price-asc") return a.price - b.price;
+      if (sort === "price-desc") return b.price - a.price;
+      return 0;
+    });
 
   return (
-    <section className="py-16 px-4 bg-yellow-50 text-center" id="meals">
-      <h2 className="text-3xl font-bold text-red-500 mb-6">Featured Meals</h2>
+    <section className="py-16 px-4 bg-yellow-50 text-center">
+      <h2 className="text-3xl font-bold text-red-500 mb-6">Meals</h2>
 
-      <div className="mb-10 max-w-md mx-auto">
+      {/* 🔍 Search Input */}
+      <div className="mb-4 max-w-md mx-auto">
         <input
           type="text"
           placeholder="Search meals or vendors..."
@@ -85,9 +84,24 @@ function Meals() {
         />
       </div>
 
+      {/* 🔽 Sort Dropdown */}
+      <div className="mb-10 max-w-md mx-auto">
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value)}
+          className="w-full px-4 py-2 border border-gray-300 rounded shadow-sm text-gray-700"
+        >
+          <option value="">Sort by: Latest</option>
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+        </select>
+      </div>
+
+      {/* 🧾 Meals Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {filteredMeals.map((meal, i) => {
           const isFav = favorites.some((fav) => fav.name === meal.name);
+          const vendorName = meal.vendor?.name || "Unknown Vendor";
           return (
             <div key={i} className="relative bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
               <button
@@ -109,12 +123,12 @@ function Meals() {
                       if (!user) {
                         navigate("/auth");
                       } else {
-                        navigate(`/vendor/${encodeURIComponent(meal.vendor)}`);
+                        navigate(`/vendor/${meal.vendor?._id}`);
                       }
                     }}
                     className="text-sm text-red-500 hover:underline cursor-pointer"
                   >
-                    {meal.vendor}
+                    {vendorName}
                   </span>
                   <RatingStars value={meal.rating || 4.0} />
                 </div>

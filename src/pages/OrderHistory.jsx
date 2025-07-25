@@ -24,12 +24,12 @@ function OrderHistory() {
 
   return (
     <section className="py-16 px-4 min-h-screen bg-white">
-      <h2 className="text-3xl font-bold text-red-500 mb-6">Order History</h2>
+      <h2 className="text-3xl text-center font-bold text-red-500 mb-6">Order History</h2>
 
       {loading ? (
-        <p className="text-gray-500">Loading orders...</p>
+        <p className="text-gray-500 text-center">Loading orders...</p>
       ) : orders.length === 0 ? (
-        <p className="text-gray-500">No orders yet.</p>
+        <p className="text-gray-500 text-center">No orders yet.</p>
       ) : (
         orders.map((order, i) => (
           <div key={i} className="bg-yellow-50 rounded-xl p-4 mb-4 shadow space-y-2">
