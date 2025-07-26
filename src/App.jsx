@@ -20,11 +20,26 @@ function AppWrapper() {
   const [isVendor, setIsVendor] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
+  // ✅ Check user auth and role
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     setIsLoggedIn(!!storedUser?.token);
     setIsVendor(storedUser?.role === "vendor");
   }, [location.pathname]);
+
+  // ✅ Warm up backend (ping once on app load)
+  useEffect(() => {
+    const warmBackend = async () => {
+      try {
+        await fetch("https://mealpal-backend-emoq.onrender.com/?ping=true");
+        console.log("✅ Backend is awake");
+      } catch (error) {
+        console.warn("⚠️ Failed to ping backend:", error);
+      }
+    };
+
+    warmBackend();
+  }, []);
 
   return (
     <>
@@ -78,8 +93,6 @@ function AppWrapper() {
                 </ProtectedRoute>
               }
             />
-            
-            
           </>
         )}
 
@@ -112,7 +125,7 @@ function AppWrapper() {
 function App() {
   return (
     <Router>
-      <Toaster position="top-center" toastOptions={{ duration: 3000 }} /> {/* ✅ Added */}
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <AppWrapper />
     </Router>
   );
