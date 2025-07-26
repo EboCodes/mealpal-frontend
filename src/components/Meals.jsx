@@ -48,7 +48,7 @@ function Meals() {
         setMeals(data);
       } catch (err) {
         console.error("Failed to fetch meals:", err);
-        setMeals([]); // fallback to avoid crashing
+        setMeals([]);
       }
     };
 
@@ -100,10 +100,12 @@ function Meals() {
       {/* 🧾 Meals Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
         {filteredMeals.map((meal, i) => {
-          const isFav = favorites.some((fav) => fav.name === meal.name);
+          // 🔧 FIX: Use meal._id for favorites comparison instead of name
+          const isFav = favorites.some((fav) => fav._id === meal._id);
           const vendorName = meal.vendor?.name || "Unknown Vendor";
+          
           return (
-            <div key={i} className="relative bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
+            <div key={meal._id || i} className="relative bg-white rounded-xl shadow hover:shadow-lg transition overflow-hidden">
               <button
                 onClick={() => toggleFavorite(meal)}
                 className="absolute top-3 right-3 text-xl"
@@ -123,7 +125,8 @@ function Meals() {
                       if (!user) {
                         navigate("/auth");
                       } else {
-                        navigate(`/vendor/${meal.vendor?._id}`);
+                        // 🔧 FIX: Navigate using vendor NAME instead of ID
+                        navigate(`/vendor/${encodeURIComponent(vendorName)}`);
                       }
                     }}
                     className="text-sm text-red-500 hover:underline cursor-pointer"
