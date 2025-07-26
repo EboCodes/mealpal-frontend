@@ -5,80 +5,124 @@ const CartContext = createContext();
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
 
-  // 🔧 Load cart from localStorage on component mount
+  // 🔧 FIX: Load cart from localStorage with better error handling
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem("cart");
       if (savedCart) {
-        setCart(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart);
+        // 🔧 Validate that it's actually an array
+        if (Array.isArray(parsedCart)) {
+          setCart(parsedCart);
+        } else {
+          console.warn("Invalid cart data in localStorage, clearing...");
+          localStorage.removeItem("cart");
+        }
       }
     } catch (error) {
       console.error("Error loading cart from localStorage:", error);
+      // Clear corrupted data
+      localStorage.removeItem("cart");
     }
   }, []);
 
-  // 🔧 Save cart to localStorage whenever cart changes
+  // 🔧 FIX: Save cart to localStorage with validation
   useEffect(() => {
     try {
-      localStorage.setItem("cart", JSON.stringify(cart));
+      if (Array.isArray(cart)) {
+        localStorage.setItem("cart", JSON.stringify(cart));
+      }
     } catch (error) {
       console.error("Error saving cart to localStorage:", error);
     }
   }, [cart]);
 
   const addToCart = (meal) => {
+    // 🔧 FIX: Add validation for meal object
+    if (!meal || !meal._id) {
+      console.error("Invalid meal object passed to addToCart:", meal);
+      return;
+    }
+
     setCart((prev) => {
+      // 🔧 Ensure prev is always an array
+      const currentCart = Array.isArray(prev) ? prev : [];
+      
       // Check if meal already exists in cart
-      const existingItem = prev.find((item) => item._id === meal._id);
+      const existingItem = currentCart.find((item) => item?._id === meal._id);
       
       if (existingItem) {
         // If exists, increment quantity
-        return prev.map((item) =>
-          item._id === meal._id
-            ? { ...item, quantity: item.quantity + 1 }
+        return currentCart.map((item) =>
+          item?._id === meal._id
+            ? { ...item, quantity: (item.quantity || 0) + 1 }
             : item
         );
       } else {
         // If new, add with quantity 1
-        return [...prev, { ...meal, quantity: 1 }];
+        return [...currentCart, { ...meal, quantity: 1 }];
       }
     });
   };
 
   const removeFromCart = (mealId) => {
-    setCart((prev) => prev.filter((item) => item._id !== mealId));
+    if (!mealId) {
+      console.error("No mealId provided to removeFromCart");
+      return;
+    }
+    
+    setCart((prev) => {
+      const currentCart = Array.isArray(prev) ? prev : [];
+      return currentCart.filter((item) => item?._id !== mealId);
+    });
   };
 
   const updateQuantity = (mealId, newQuantity) => {
+    if (!mealId) {
+      console.error("No mealId provided to updateQuantity");
+      return;
+    }
+    
     if (newQuantity <= 0) {
       removeFromCart(mealId);
       return;
     }
     
-    setCart((prev) =>
-      prev.map((item) =>
-        item._id === mealId ? { ...item, quantity: newQuantity } : item
-      )
-    );
+    setCart((prev) => {
+      const currentCart = Array.isArray(prev) ? prev : [];
+      return currentCart.map((item) =>
+        item?._id === mealId ? { ...item, quantity: newQuantity } : item
+      );
+    });
   };
 
   const clearCart = () => {
     setCart([]);
   };
 
-  // Note: Purchase count tracking is now handled automatically 
-  // when orders are created in orderRoutes.js
+  // 🔧 FIX: Calculate totals with better validation
+  const totalPrice = Array.isArray(cart) 
+    ? cart.reduce((total, item) => {
+        if (item && typeof item.price === 'number' && typeof item.quantity === 'number') {
+          return total + (item.price * item.quantity);
+        }
+        return total;
+      }, 0)
+    : 0;
 
-  // Calculate total price
-  const totalPrice = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-
-  // Calculate total items
-  const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
+  const totalItems = Array.isArray(cart)
+    ? cart.reduce((total, item) => {
+        if (item && typeof item.quantity === 'number') {
+          return total + item.quantity;
+        }
+        return total;
+      }, 0)
+    : 0;
 
   return (
     <CartContext.Provider
       value={{
-        cart,
+        cart: Array.isArray(cart) ? cart : [], // Always ensure cart is an array
         addToCart,
         removeFromCart,
         updateQuantity,

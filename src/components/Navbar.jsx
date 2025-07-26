@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import Swal from 'sweetalert2'; // ✅ Import SweetAlert2
+import Swal from 'sweetalert2';
 import { useCart } from '../context/CartContext';
 
 function Navbar() {
@@ -8,7 +8,7 @@ function Navbar() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { cartItems } = useCart();
+  const { cart } = useCart(); // ✅ Renamed from cartItems
 
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
@@ -21,7 +21,6 @@ function Navbar() {
 
   const handleClose = () => setOpen(false);
 
-  // ✅ Stylish logout with confirmation
   const handleLogout = async () => {
     const result = await Swal.fire({
       title: 'Are you sure you want to logout?',
@@ -87,9 +86,9 @@ function Navbar() {
               </Link>
               <Link to="/cart" className="relative text-gray-700 hover:text-red-500" onClick={handleClose}>
                 🛒
-                {cartItems.length > 0 && (
+                {cart.length > 0 && (
                   <span className="absolute -top-2 -right-3 bg-red-500 text-white text-xs px-1.5 rounded-full">
-                    {cartItems.length}
+                    {cart.length}
                   </span>
                 )}
               </Link>

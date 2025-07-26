@@ -9,7 +9,17 @@ function FeaturedMeals() {
   const { addToCart } = useCart();
   const navigate = useNavigate();
   
-  const user = JSON.parse(localStorage.getItem("user"));
+  // 🔧 FIX: Add null check for localStorage
+  const user = (() => {
+    try {
+      const userData = localStorage.getItem("user");
+      return userData ? JSON.parse(userData) : null;
+    } catch (e) {
+      console.error("Error parsing user data:", e);
+      return null;
+    }
+  })();
+  
   const school = user?.school;
 
   useEffect(() => {
@@ -35,7 +45,13 @@ function FeaturedMeals() {
         const data = await res.json();
         console.log("Featured meals data:", data); // Debug log
         
-        setMeals(data.meals || []);
+        // 🔧 FIX: Add validation for response structure
+        if (data && Array.isArray(data.meals)) {
+          setMeals(data.meals);
+        } else {
+          console.warn("Invalid response structure:", data);
+          setMeals([]);
+        }
       } catch (err) {
         console.error("Error fetching featured meals:", err);
         setError(err.message);
@@ -49,6 +65,12 @@ function FeaturedMeals() {
   }, [school]);
 
   const handleAddToCart = (meal) => {
+    // 🔧 FIX: Add validation for meal object
+    if (!meal || !meal._id) {
+      console.error("Invalid meal object:", meal);
+      return;
+    }
+    
     if (!user) {
       navigate("/auth");
       return;
@@ -57,6 +79,11 @@ function FeaturedMeals() {
   };
 
   const handleVendorClick = (vendorName) => {
+    if (!vendorName) {
+      console.error("No vendor name provided");
+      return;
+    }
+    
     if (!user) {
       navigate("/auth");
       return;
@@ -112,50 +139,59 @@ function FeaturedMeals() {
       ) : (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-8 max-w-6xl mx-auto">
-            {meals.map((meal) => (
-              <div
-                key={meal._id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-              >
-                <img
-                  src={meal.img || "https://via.placeholder.com/400x300.png?text=Meal+Image"}
-                  alt={meal.name}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    {meal.name}
-                  </h3>
-                  
-                  {/* Vendor Info */}
-                  <button
-                    onClick={() => handleVendorClick(meal.vendor?.name)}
-                    className="text-sm text-red-500 hover:underline mb-2 block"
-                  >
-                    by {meal.vendor?.name || "Unknown Vendor"}
-                  </button>
-                  
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-lg font-bold text-red-500">
-                      ₦{meal.price}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {meal.purchaseCount > 0 
-                        ? `Ordered ${meal.purchaseCount} times` 
-                        : "New!"
-                      }
-                    </span>
+            {meals.map((meal) => {
+              // 🔧 FIX: Add validation for each meal object
+              if (!meal || !meal._id) {
+                console.warn("Invalid meal object:", meal);
+                return null;
+              }
+
+              return (
+                <div
+                  key={meal._id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                >
+                  <img
+                    src={meal.img || "https://via.placeholder.com/400x300.png?text=Meal+Image"}
+                    alt={meal.name || "Meal"}
+                    className="w-full h-48 object-cover"
+                  />
+                  <div className="p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {meal.name || "Unknown Meal"}
+                    </h3>
+                    
+                    {/* 🔧 FIX: Vendor Info with proper null checks */}
+                    <button
+                      onClick={() => handleVendorClick(meal.vendor?.name)}
+                      className="text-sm text-red-500 hover:underline mb-2 block"
+                      disabled={!meal.vendor?.name}
+                    >
+                      by {meal.vendor?.name || "Unknown Vendor"}
+                    </button>
+                    
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-lg font-bold text-red-500">
+                        ₦{meal.price || 0}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {(meal.purchaseCount || 0) > 0 
+                          ? `Ordered ${meal.purchaseCount} times` 
+                          : "New!"
+                        }
+                      </span>
+                    </div>
+                    
+                    <button
+                      onClick={() => handleAddToCart(meal)}
+                      className="w-full bg-red-500 text-white font-medium py-2 rounded hover:bg-red-600 transition-colors"
+                    >
+                      Add to Cart
+                    </button>
                   </div>
-                  
-                  <button
-                    onClick={() => handleAddToCart(meal)}
-                    className="w-full bg-red-500 text-white font-medium py-2 rounded hover:bg-red-600 transition-colors"
-                  >
-                    Add to Cart
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            }).filter(Boolean)} {/* Remove null entries */}
           </div>
 
           <div className="text-center">
