@@ -1,5 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
 import { Toaster } from "react-hot-toast"; 
 
 import Navbar from "./components/Navbar";
@@ -14,18 +14,12 @@ import VendorDashboard from "./pages/VendorDashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import VendorDirectory from "./pages/VendorDirectory";
 import VendorOrders from "./pages/VendorOrders"; 
+import { useAuth } from "./context/AuthContext";
 
 function AppWrapper() {
-  const location = useLocation();
-  const [isVendor, setIsVendor] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  // ✅ Check user auth and role
-  useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    setIsLoggedIn(!!storedUser?.token);
-    setIsVendor(storedUser?.role === "vendor");
-  }, [location.pathname]);
+  const { user } = useAuth();
+  const isLoggedIn = !!user?.isLoggedIn;
+  const isVendor = user?.role === "vendor";
 
   // ✅ Warm up backend (ping once on app load)
   useEffect(() => {
