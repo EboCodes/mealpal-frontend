@@ -45,7 +45,7 @@ function Meals() {
         if (!res.ok) throw new Error("Meal fetch failed");
 
         const data = await res.json();
-        setMeals(data);
+        setMeals(data.meals || []);
       } catch (err) {
         console.error("Failed to fetch meals:", err);
         setMeals([]);
