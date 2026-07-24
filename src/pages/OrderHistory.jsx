@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { authFetch } from "../utils/api";
 
 function OrderHistory() {
   const [orders, setOrders] = useState([]);
@@ -8,7 +9,7 @@ function OrderHistory() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/orders/${user?.email}`);
+        const res = await authFetch(`https://mealpal-backend-emoq.onrender.com/api/orders/${user?.email}`);
         const data = await res.json();
         if (res.ok) setOrders(data);
         else console.error("Failed to fetch orders");

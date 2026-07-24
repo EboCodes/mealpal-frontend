@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import VendorOrders from "./VendorOrders";
 import toast from "react-hot-toast";
+import { authFetch } from "../utils/api";
 
 function VendorDashboard() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -96,9 +97,8 @@ function VendorDashboard() {
     }
 
     try {
-      const res = await fetch("https://mealpal-backend-emoq.onrender.com/api/vendor/profile", {
+      const res = await authFetch("https://mealpal-backend-emoq.onrender.com/api/vendor/profile", {
         method: "PUT",
-        // Removed auth header for now - check if this endpoint needs it
         body: formData,
       });
 
@@ -184,9 +184,8 @@ function VendorDashboard() {
         : "https://mealpal-backend-emoq.onrender.com/api/meals";
       const method = form.editingId ? "PUT" : "POST";
 
-      const res = await fetch(endpoint, {
+      const res = await authFetch(endpoint, {
         method,
-        // Removed Authorization header - your backend doesn't require it
         body: formData,
       });
 
@@ -234,12 +233,8 @@ function VendorDashboard() {
     if (!window.confirm("Are you sure you want to delete this meal?")) return;
 
     try {      
-      const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals/${id}`, {
+      const res = await authFetch(`https://mealpal-backend-emoq.onrender.com/api/meals/${id}`, {
         method: "DELETE",
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ vendor: userId }), // Use extracted user ID
       });
       
       if (res.ok) {

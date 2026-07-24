@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { useCart } from "../context/CartContext";
 import { useEffect, useState } from "react";
+import { authFetch } from "../utils/api";
 
 function VendorProfile() {
   const { name } = useParams();
@@ -92,7 +93,7 @@ function VendorProfile() {
     setRating(star);
     setSubmitted(true);
     try {
-      const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${encodeURIComponent(vendorName)}/rate`, {
+      const res = await authFetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${encodeURIComponent(vendorName)}/rate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ rating: star }),

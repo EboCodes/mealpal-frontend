@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { authFetch } from "../utils/api";
 
 function VendorOrders({ vendorName }) {
   const [orders, setOrders] = useState([]);
@@ -10,8 +11,13 @@ function VendorOrders({ vendorName }) {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/orders/vendor/${vendorName}`);
+      const res = await authFetch(`https://mealpal-backend-emoq.onrender.com/api/orders/vendor/${vendorName}`);
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to fetch vendor orders");
+      }
+
       setOrders(data);
 
       // Calculate revenue for this vendor
@@ -26,8 +32,9 @@ function VendorOrders({ vendorName }) {
 
       setRevenue(total);
     } catch (err) {
-      toast.error("Failed to fetch vendor orders");
+      toast.error(err.message || "Failed to fetch vendor orders");
       console.error("Error fetching vendor orders:", err);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -41,7 +48,7 @@ function VendorOrders({ vendorName }) {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      const res = await fetch(`https://mealpal-backend-emoq.onrender.com/api/orders/${orderId}/status`, {
+      const res = await authFetch(`https://mealpal-backend-emoq.onrender.com/api/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),

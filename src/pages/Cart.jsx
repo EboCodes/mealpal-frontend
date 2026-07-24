@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import { authFetch } from '../utils/api';
 
 function Cart() {
   const [useDelivery, setUseDelivery] = useState(false);
@@ -56,7 +57,7 @@ function Cart() {
 
       console.log("Sending order data:", orderData); // Debug log
 
-      const res = await fetch("https://mealpal-backend-emoq.onrender.com/api/orders", {
+      const res = await authFetch("https://mealpal-backend-emoq.onrender.com/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
