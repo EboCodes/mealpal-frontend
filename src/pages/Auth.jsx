@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useAuth } from '../context/AuthContext';
 
 function Auth() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const [userType, setUserType] = useState("user");
   const [mode, setMode] = useState("signup");
@@ -68,16 +70,13 @@ function Auth() {
         return;
       }
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          token: data.token,
-          role: data.role,
-          name: data.name || form.name,
-          email: data.email || form.email,
-          school: data.school || form.school,
-        })
-      );
+      login({
+        token: data.token,
+        role: data.role,
+        name: data.name || form.name,
+        email: data.email || form.email,
+        school: data.school || form.school,
+      });
 
       Swal.fire({
         icon: "success",
