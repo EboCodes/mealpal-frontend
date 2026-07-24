@@ -51,11 +51,11 @@ function VendorDashboard() {
           return;
         }
 
-        const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals?school=${school}`);
+        const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals?school=${school}&limit=100`);
         const mealsData = await mealRes.json();
         
         // Filter meals by vendor ID instead of vendor name
-        setMeals(mealsData.filter((m) => m.vendor === userId || m.vendor?._id === userId));
+        setMeals((mealsData.meals || []).filter((m) => m.vendor === userId || m.vendor?._id === userId));
 
         const profileRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/vendor/${vendorName}`);
         const profileData = await profileRes.json();

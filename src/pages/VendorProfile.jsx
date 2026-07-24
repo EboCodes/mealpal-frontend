@@ -25,13 +25,13 @@ function VendorProfile() {
       const school = user?.school;
 
       // Fetch meals filtered by school (more efficient)
-      const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals${school ? `?school=${school}` : ''}`);
+      const mealRes = await fetch(`https://mealpal-backend-emoq.onrender.com/api/meals?limit=100${school ? `&school=${school}` : ''}`);
       
       if (!mealRes.ok) {
         throw new Error(`Failed to fetch meals: ${mealRes.status}`);
       }
       
-      const mealData = await mealRes.json();
+      const mealData = (await mealRes.json()).meals || [];
       
       // Debug: log what we got
       console.log("Fetched meals:", mealData);
