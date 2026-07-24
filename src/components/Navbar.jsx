@@ -1,23 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  const location = useLocation();
   const { cart } = useCart(); // ✅ Renamed from cartItems
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      setUser(null);
-    }
-  }, [location.pathname]);
+  const { user, logout } = useAuth();
 
   const handleClose = () => setOpen(false);
 
@@ -33,8 +24,7 @@ function Navbar() {
     });
 
     if (result.isConfirmed) {
-      localStorage.removeItem("user");
-      setUser(null);
+      logout();
       navigate("/auth");
 
       Swal.fire({
@@ -70,7 +60,7 @@ function Navbar() {
           </Link>
 
           {/* 👨‍🎓 Student-Only Links */}
-          {user && !isVendor && (
+          {user?.isLoggedIn && !isVendor && (
             <>
               <Link to="/meals" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
                 Meals
@@ -96,14 +86,14 @@ function Navbar() {
           )}
 
           {/* 🧑‍🍳 Vendor Dashboard */}
-          {user && isVendor && (
+          {user?.isLoggedIn && isVendor && (
             <Link to="/dashboard" className="text-gray-700 hover:text-red-500" onClick={handleClose}>
               Dashboard
             </Link>
           )}
 
           {/* 🔐 Auth Section */}
-          {user ? (
+          {user?.isLoggedIn ? (
             <button
               onClick={() => {
                 handleClose();
